@@ -281,30 +281,28 @@ void global(int k) {  char *gp;  int c;  unsigned int *a1;  char globuf[GBSIZE];
         char * f_name;
         while((c = getchar()) != EOF && c != '/') //the inputted values are stored into the variable c
         {
-            str_name = c;
+            str_name = c; //stores the string name into a variable
         }
         while((c = getchar()) != EOF)
         {
-            f_name = c;
+            f_name = c; //stores the filename into a variable
         }
-        int keepgoing = 1;
-        FILE *fp;
-        char *match;
+        FILE *fp; //creates a file pointer
 
-        fp = fopen(f_name, "r");
-        if(fp == NULL)
+        fp = fopen(f_name, "r"); //saves the file to the file pointer
+        if(fp == NULL) //if the file pointer is null, there is no file with the matched name or the file is empty
         {
             printf("File could not be accessed\n"); //no file with the name given
         }
         else
         {
-            char str[10000];
-            fscanf("%s", str);
+            char str[10000]; //make a char * with the MAXLINE and store the values of the file pointer into it
+            fscanf("%s", str); //scans the newly created string
             for(int i = 0; i < strlen(str); i++)
             {
-                if(str[i] == str_name[i])
+                if(str[i] == str_name[i]) //if there is a string that matches the one that we are trying tof ind
                 {
-                    for(int j = 0; j < i; j++)
+                    for(int j = 0; j < i; j++) //cycles and prints out the lines before the line that the key word was found on
                     {
                         printf("%s", str[j]);
                     }
