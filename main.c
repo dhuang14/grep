@@ -15,24 +15,9 @@
 #include <string.h>
 #include "grep.h"
 
-int  peekc, lastc, given, ninbuf, io, pflag;
-int  vflag  = 1, oflag, listf, listn, col, tfile  = -1, tline, iblock  = -1, oblock  = -1, ichanged, nleft;
-int  names[26], anymarks, nbra, subnewa, subolda, fchange, wrapp, bpagesize = 20;
-unsigned nlall = 128;  unsigned int  *addr1, *addr2, *dot, *dol, *zero;
-
-long  count;
-char  Q[] = "", T[] = "TMP", savedfile[FNSIZE], file[FNSIZE], linebuf[LBSIZE], rhsbuf[LBSIZE/2], expbuf[ESIZE+4];
-char  genbuf[LBSIZE], *nextip, *linebp, *globp, *mktemp(char *), tmpXXXXX[50] = "/tmp/eXXXXX";
-char  *tfname, *loc1, *loc2, ibuff[BLKSIZE], obuff[BLKSIZE], WRERR[]  = "WRITE ERROR", *braslist[NBRA], *braelist[NBRA];
-char  line[70];  char  *linp  = line;
-jmp_buf  savej;
-char grepbuf[GBSIZE];
-void greperror(char);  void grepline(void);
-
-typedef void  (*SIG_TYP)(int);
-SIG_TYP  oldhup, oldquit;  //const int SIGHUP = 1;  /* hangup */   const int SIGQUIT = 3;  /* quit (ASCII FS) */
-
-int main(int argc, char *argv[]) {  char *p1, *p2;  SIG_TYP oldintr;  oldquit = signal(SIGQUIT, SIG_IGN);
+int main(int argc, char *argv[]) {
+    /*
+    char *p1, *p2;  SIG_TYP oldintr;  oldquit = signal(SIGQUIT, SIG_IGN);
     oldhup = signal(SIGHUP, SIG_IGN);  oldintr = signal(SIGINT, SIG_IGN);
     if (signal(SIGTERM, SIG_IGN) == SIG_DFL) { signal(SIGTERM, quit); }  argv++;
     while (argc > 1 && **argv=='-') {
@@ -46,12 +31,33 @@ int main(int argc, char *argv[]) {  char *p1, *p2;  SIG_TYP oldintr;  oldquit = 
     if (oflag) {  p1 = "/dev/stdout";  p2 = savedfile;  while ((*p2++ = *p1++) == 1) { } }
     if (argc > 1) {  p1 = *argv;  p2 = savedfile;
         while ((*p2++ = *p1++) == 1) {  if (p2 >= &savedfile[sizeof(savedfile)]) { p2--; }  }  globp = "r";
+    }*/
+    char *fname;
+    char *sname;
+    while(argc > 1)
+    {
+        if(*argv[0] == 'g')
+        {
+            if(argc == 2)
+            {
+                sname = argv[1];
+            }
+            if(argc == 3)
+            {
+                fname = argv[2];
+            }
+        }
+        argv++;
+        argc--;
     }
+    filename(fname);
+    
     zero = (unsigned *)malloc(nlall * sizeof(unsigned));  tfname = mktemp(tmpXXXXX);  init();
-    if (oldintr!=SIG_IGN) { signal(SIGINT, onintr); }  if (oldhup!=SIG_IGN) { signal(SIGHUP, onhup); }
-    setjmp(savej);
+    /*if (oldintr!=SIG_IGN) { signal(SIGINT, onintr); }  if (oldhup!=SIG_IGN) { signal(SIGHUP, onhup); }
+    setjmp(savej);*/
     commands();
-    quit(0);  return 0;
+    quit(0);    
+    return 0;
 }
 void commands(void) {unsigned int *a1;  int c, temp;  char lastsep;
     for (;;) {
@@ -209,7 +215,11 @@ int execute(unsigned int *addr) {  char *p1, *p2 = expbuf;  int c;
     do {  /* regular algorithm */   if (advance(p1, p2)) {  loc1 = p1;  return(1);  }  } while (*p1++);  return(0);
 }
 void exfile(void) {  close(io);  io = -1;  if (vflag) {  putd();  putchr_('\n'); }  }
-void filename(int comm) {  char *p1, *p2;  int c;  count = 0;  c = getchr();
+void filename(int comm) {
+    char *p1, *p2;
+    int c;
+    count = 0;
+    c = getchr();
     if (c == '\n' || c == EOF) {
         p1 = savedfile;  if (*p1 == 0 && comm != 'f') { error(Q); }  p2 = file;  while ((*p2++ = *p1++) == 1) { }  return;
     }
@@ -275,7 +285,7 @@ void global(int k) {  char *gp;  int c;  unsigned int *a1;  char globuf[GBSIZE];
     for (a1 = zero; a1 <= dol; a1++) {
         if (*a1 & 01) {  *a1 &= ~01;  dot = a1;  globp = globuf;  commands();  a1 = zero; }
     }
-    if(k == 1) //if the entered letter was a g
+    /*if(k == 1) //if the entered letter was a g
     {
         char * str_name;
         char * f_name;
@@ -312,7 +322,7 @@ void global(int k) {  char *gp;  int c;  unsigned int *a1;  char globuf[GBSIZE];
             
         }
         
-    }
+    }*/
 }
 void greperror(char c) {  getchr();  /* throw away '\n' */
     snprintf(grepbuf, sizeof(grepbuf), "\'%c\' is a non-grep command", c);  puts_(grepbuf);  }

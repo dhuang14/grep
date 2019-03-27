@@ -76,4 +76,25 @@ void setnoaddr(void);
 void squeeze(int);
 void substitute(int inglob);
 
+int  peekc, lastc, given, ninbuf, io, pflag;
+int  vflag  = 1, oflag, listf, listn, col, tfile  = -1, tline, iblock  = -1, oblock  = -1, ichanged, nleft;
+int  names[26], anymarks, nbra, subnewa, subolda, fchange, wrapp, bpagesize = 20;
+unsigned nlall = 128;
+unsigned int  *addr1, *addr2, *dot, *dol, *zero;
+
+long  count;
+char  Q[] = "", T[] = "TMP", savedfile[FNSIZE], file[FNSIZE], linebuf[LBSIZE], rhsbuf[LBSIZE/2], expbuf[ESIZE+4];
+char  genbuf[LBSIZE], *nextip, *linebp, *globp, *mktemp(char *), tmpXXXXX[50] = "/tmp/eXXXXX";
+char  *tfname, *loc1, *loc2, ibuff[BLKSIZE], obuff[BLKSIZE], WRERR[]  = "WRITE ERROR", *braslist[NBRA], *braelist[NBRA];
+char  line[70];
+char  *linp  = line;
+jmp_buf  savej;
+char grepbuf[GBSIZE];
+void greperror(char);
+void grepline(void);
+
+typedef void  (*SIG_TYP)(int);
+SIG_TYP  oldhup, oldquit;  //const int SIGHUP = 1;  /* hangup */   const int SIGQUIT = 3;  /* quit (ASCII FS) */
+
+
 #endif /* grep_h */
