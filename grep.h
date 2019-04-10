@@ -8,7 +8,10 @@
 
 #ifndef grep_h
 #define grep_h
+#define BUFSIZE 100
 
+char buf[BUFSIZE];
+int bufp = 0;
 const int BLKSIZE = 4096;
 const int NBLK = 2047;
 const int FNSIZE = 128;
@@ -43,7 +46,7 @@ void dosub(void);
 void error(char *s);
 int execute(unsigned int *addr);
 void exfile(void);
-void filename(int comm);
+void filename(const char* fname);
 void gdelete(void);
 char *getblock(unsigned int atl, int iof); int getchr(void);
 int getcopy(void);
@@ -69,6 +72,7 @@ void putfile(void);
 int putline(void);
 void puts_(char *sp);
 void quit(int n);
+void readfile(const char* fname);
 void rdelete(unsigned int *ad1, unsigned int *ad2);
 void reverse(unsigned int *a1, unsigned int *a2);
 void setwide(void);

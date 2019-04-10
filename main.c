@@ -15,50 +15,81 @@
 #include <string.h>
 #include "grep.h"
 
+
 int main(int argc, char *argv[]) {
-    /*
-    char *p1, *p2;  SIG_TYP oldintr;  oldquit = signal(SIGQUIT, SIG_IGN);
-    oldhup = signal(SIGHUP, SIG_IGN);  oldintr = signal(SIGINT, SIG_IGN);
-    if (signal(SIGTERM, SIG_IGN) == SIG_DFL) { signal(SIGTERM, quit); }  argv++;
-    while (argc > 1 && **argv=='-') {
-        switch((*argv)[1]) {
-            case '\0': vflag = 0;  break;
-            case 'q': signal(SIGQUIT, SIG_DFL);  vflag = 1;  break;
-            case 'o': oflag = 1;  break;
-        }
-        argv++;  argc--;
+    if (argc != 3) {
+        fprintf(stderr, "Usage: ./grep searchre file(s)\n");
+        exit(0);
     }
-    if (oflag) {  p1 = "/dev/stdout";  p2 = savedfile;  while ((*p2++ = *p1++) == 1) { } }
-    if (argc > 1) {  p1 = *argv;  p2 = savedfile;
-        while ((*p2++ = *p1++) == 1) {  if (p2 >= &savedfile[sizeof(savedfile)]) { p2--; }  }  globp = "r";
-    }*/
-    char *fname;
-    char *sname;
-    while(argc > 1)
-    {
-        if(*argv[0] == 'g')
-        {
-            if(argc == 2)
-            {
-                sname = argv[1];
-            }
-            if(argc == 3)
-            {
-                fname = argv[2];
-            }
-        }
-        argv++;
-        argc--;
-    }
-    filename(fname);
+    zero = (unsigned *)malloc(nlall * sizeof(unsigned));
+    tfname = mktemp(tmpXXXXX);
+    init();
     
-    zero = (unsigned *)malloc(nlall * sizeof(unsigned));  tfname = mktemp(tmpXXXXX);  init();
-    /*if (oldintr!=SIG_IGN) { signal(SIGINT, onintr); }  if (oldhup!=SIG_IGN) { signal(SIGHUP, onhup); }
-    setjmp(savej);*/
-    commands();
-    quit(0);    
-    return 0;
+    readfile(argv[2]);
+    search(argv[1]);
+    printf("\nquitting...\n");  exit(1);
 }
+
+int getch_(void) {
+    char c = (bufp > 0) ? buf[--bufp] : getchar();
+    lastc = c & 0177;
+    //  if (lastc == '\n') {  // uncomment if you want to see the chars
+    //    printf("getch(): newline\n");
+    //  } else {
+    /     printf("getch_(): %c\n", lastc);
+     }
+
+void ungetch_(int c) {
+    if (bufp >= BUFSIZE) {
+        printf("ungetch: overflow\n");
+    }
+    else{
+        buf[bufp++] = c;
+    }
+    }
+
+void search_(const char* re) {
+    char buf[GBSIZE];
+    snprintf(buf, sizeof(buf), "/%s\n", re);  // / and \n very important
+    drawline();
+    printf("g%s", buf);  const char* p = buf + strlen(buf) - 1;
+    while (p >= buf) { ungetch_(*p--); }  global(1);
+}
+
+void search_file(const char* filename, const char* searchfor) {
+    printf("\n");  drawline();  drawline();  printf("processing %s...\n", filename);  drawline();
+    readfile(filename);
+    search(searchfor);
+}
+
+void process_dir(const char* dir, const char* searchfor, void (*fp)(const char*, const char*)) {
+    if (strchr(dir, '*') == NULL) {  search_file(dir, searchfor);  return; }  // search one file
+    
+    // or search a directory of files using glob()
+    glob_t results;  memset(&results, 0, sizeof(results));  glob(dir, 0, NULL, &results);
+    drawline();  drawline();  drawline();  printf("processing files in %s...\n\n", dir);
+    for (int i = 0; i < results.gl_pathc; ++i) {
+        const char* filename = results.gl_pathv[i];
+        fp(filename, searchfor);    // function ptr to function that reads and searches a file
+    }
+    globfree(&results);
+}
+void printcommand(void) {  int c;  char lastsep;
+    for (;;) {  unsigned int* a1;
+        if (pflag) { pflag = 0;  addr1 = addr2 = dot;  print(); }  c = '\n';
+        for (addr1 = 0;;) {  lastsep = c;  a1 = address();  c = getchr();
+            if (c != ',' && c != ';') { break; }  if (lastsep==',') { error(Q); }
+            if (a1==0) {  a1 = zero+1;  if (a1 > dol) { a1--; }  }  addr1 = a1;  if (c == ';') { dot = a1; }
+        }
+        if (lastsep != '\n' && a1 == 0) { a1 = dol; }
+        if ((addr2 = a1)==0) { given = 0;  addr2 = dot;  } else { given = 1; }  if (addr1==0) { addr1 = addr2; }
+        switch(c) {
+            case 'p':  case 'P':  newline();  print();  continue;
+            case EOF:  default:  return;
+        }
+    }
+}
+    
 void commands(void) {unsigned int *a1;  int c, temp;  char lastsep;
     for (;;) {
         if (pflag) { pflag = 0;  addr1 = addr2 = dot;  print(); }  c = '\n';
@@ -215,22 +246,9 @@ int execute(unsigned int *addr) {  char *p1, *p2 = expbuf;  int c;
     do {  /* regular algorithm */   if (advance(p1, p2)) {  loc1 = p1;  return(1);  }  } while (*p1++);  return(0);
 }
 void exfile(void) {  close(io);  io = -1;  if (vflag) {  putd();  putchr_('\n'); }  }
-void filename(int comm) {
-    char *p1, *p2;
-    int c;
-    count = 0;
-    c = getchr();
-    if (c == '\n' || c == EOF) {
-        p1 = savedfile;  if (*p1 == 0 && comm != 'f') { error(Q); }  p2 = file;  while ((*p2++ = *p1++) == 1) { }  return;
-    }
-    if (c!=' ') { error(Q); }
-    while ((c = getchr()) == ' ') { }  if (c=='\n') { error(Q); }  p1 = file;
-    do {
-        if (p1 >= &file[sizeof(file) - 1] || c == ' ' || c == EOF) { error(Q); }  *p1++ = c;
-    } while ((c = getchr()) != '\n');
-    *p1++ = 0;
-    if (savedfile[0] == 0||comm == 'e'||comm == 'f') { p1 = savedfile;  p2 = file;  while ((*p1++ = *p2++) == 1) { } }
-}
+
+void filename(const char* fname) { strcpy(file, fname);  strcpy(savedfile, fname); }
+
 char * getblock(unsigned int atl, int iof) {  int off, bno = (atl/(BLKSIZE/2));  off = (atl<<1) & (BLKSIZE-1) & ~03;
     if (bno >= NBLK) {  lastc = '\n';  error(T);  }  nleft = BLKSIZE - off;
     if (bno==iblock) {  ichanged |= iof;  return(ibuff+off);  }  if (bno==oblock)  { return(obuff+off);  }
@@ -401,6 +419,23 @@ int putline(void) {  char *bp, *lp;  int nl;  unsigned int tl;  fchange = 1;  lp
 }
 void puts_(char *sp) {  col = 0;  while (*sp) { putchr_(*sp++); }  putchr_('\n');  }
 void quit(int n) { if (vflag && fchange && dol!=zero) {  fchange = 0;  error(Q);  }  unlink(tfname); exit(0); }
+void readfile(const char* fname)
+{
+    FILE *fp;
+    char c;
+    fp = fopen(fname, "r");
+    if(fp == NULL)
+    {
+        fprintf(stderr, "Cannot find file.\n");
+        exit(1);
+    }
+    for(int i = 0; (c = getc(fp)) != NULL; i++)
+    {
+        genbuf[i] = c;
+    }
+    
+    fclose(fp);
+}
 void reverse(unsigned int *a1, unsigned int *a2) {  int t;
     for (;;) {  t = *--a2;  if (a2 <= a1) { return; }  *a2 = *a1;  *a1++ = t;  }
 }
