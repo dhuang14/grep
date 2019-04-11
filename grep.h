@@ -8,8 +8,8 @@
 
 #ifndef grep_h
 #define grep_h
-#define BUFSIZE 100
 
+const int BUFSIZE = 100;
 char buf[BUFSIZE];
 int bufp = 0;
 const int BLKSIZE = 4096;
@@ -38,9 +38,12 @@ void commands(void);
 void add(int i);
 unsigned int *address(void);
 int advance(char *lp, char *ep);
-int append(int (*f)(void), unsigned int *a);  int backref(int i, char *lp);
-void blkio(int b, char *buf, long (*iofcn)(int, void*, unsigned long));  void callunix(void);
-int cclass(char *set, int c, int af);  void compile(int eof);
+int append(int (*f)(void), unsigned int *a);
+int backref(int i, char *lp);
+void blkio(int b, char *buf, long (*iofcn)(int, void*, unsigned long));
+void callunix(void);
+int cclass(char *set, int c, int af);
+void compile(int eof);
 int compsub(void);
 void dosub(void);
 void error(char *s);
