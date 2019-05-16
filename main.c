@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
     init();
     
     readfile(argv[2]);
-    search(argv[1]);
-    printf("\nquitting...\n");  exit(1);
+    printf("\nquitting...\n");
+    exit(1);
 }
 
 int getch_(void) {
@@ -56,7 +56,6 @@ void ungetch_(int c) {
 void search_(const char* re) {
     char buf[GBSIZE];
     snprintf(buf, sizeof(buf), "/%s\n", re);  // / and \n very important
-    drawline();
     printf("g%s", buf);
     const char* p = buf + strlen(buf) - 1;
     while (p >= buf) { ungetch_(*p--); }
@@ -65,12 +64,8 @@ void search_(const char* re) {
 
 void search_file(const char* filename, const char* searchfor) {
     printf("\n");
-    drawline();
-    drawline();
     printf("processing %s...\n", filename);
-    drawline();
     readfile(filename);
-    search(searchfor);
 }
 
 void process_dir(const char* dir, const char* searchfor, void (*fp)(const char*, const char*)) {
@@ -83,9 +78,6 @@ void process_dir(const char* dir, const char* searchfor, void (*fp)(const char*,
     glob_t results;
     memset(&results, 0, sizeof(results));
     glob(dir, 0, NULL, &results);
-    drawline();
-    drawline();
-    drawline();
     printf("processing files in %s...\n\n", dir);
     for (int i = 0; i < results.gl_pathc; ++i) {
         const char* filename = results.gl_pathv[i];
@@ -143,7 +135,7 @@ void printcommand(void) {
     
 void commands(void) {
     unsigned int *a1;
-    int c, temp;
+    int c;
     char lastsep;
     for (;;) {
         if (pflag) {
@@ -195,7 +187,7 @@ void commands(void) {
                 if (vflag && fchange) {
                     fchange = 0;
                     error(Q);
-                } filename(c);
+                }
                 init();
                 addr2 = zero;
                 goto caseread;
@@ -224,8 +216,6 @@ void commands(void) {
                 continue;
             case 'z':  grepline();
                         continue;
-            caseGrepError:  greperror(c);
-                continue;
         }  error(Q);
     }
 }
@@ -374,9 +364,10 @@ int advance(char *lp, char *ep) {
                             while (cclass(ep, *lp++, ep[-1] == (CCL|STAR))) { }  ep += *ep;
                             goto star;
             star:  do {
-                        lp--;  if (advance(lp, ep)) {
+                        lp--;
+                        if (advance(lp, ep)) {
                                 return(1);
-                                }
+                        }
     
                     }
                 while (lp > curlp);
